@@ -1,0 +1,90 @@
+---
+title: "Machine Learning Assignment"
+output: html_document
+---
+
+## SETUP & PEREQUISITE
+```{r}
+setwd("C:\\WORKAREA\\R Studio")
+suppressWarnings(suppressMessages(library(caret)))
+suppressWarnings(suppressMessages(library(randomForest)))
+suppressWarnings(suppressMessages(library(e1071)))
+```
+
+## LOAD DATA FRAME
+```{r}
+training.Url    <- 'https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv'
+test.Url        <- 'https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv'
+
+df_training     <-read.csv(training.Url, na.strings=c("NA","","#DIV/0!"))
+df_training     <-df_training[,colSums(is.na(df_training)) == 0]
+
+df_test         <-read.csv(test.Url, na.strings=c("NA", "", "#DIV/0!"))
+df_test         <-df_test[,colSums(is.na(df_test)) == 0]
+```
+
+## VISUAL ANALYSIS
+```{r}
+str(df_training)
+str(df_test)
+summary(df_training)
+summary(df_test)
+dim(df_training)
+dim(df_test)
+```
+
+## WORKING WITH DATA FRAME
+```{r}
+df_Training   <-df_training[,-c(1:7)]
+df_Test <-df_test[,-c(1:7)]
+dim(df_Training)
+dim(df_Test)
+```
+
+## PARTITIONING TRANING DATA
+```{r}
+set.seed(101)
+TrainDATA     <- createDataPartition(df_Training$classe, p = 0.6, list = FALSE)
+inTraining    <- df_Training[TrainDATA,]
+inTest        <- df_Training[-TrainDATA,]
+```
+
+## BUILD MODEL
+```{r}
+fullModel <- train(classe ~ ., data = inTraining, method = "rf", metric = "Accuracy"  
+                , preProcess=c("center", "scale") 
+                , trControl=trainControl(method = "cv", number = 4, p= 0.60, allowParallel = T)
+                  )
+```
+
+## SAVE MODEL
+```{r}
+save(fullModel, file = "fullModel.RData")
+```
+
+## PRINT MODEL
+```{r}
+print(fullModel, digits=4)
+```
+## BUILD PREDICTION
+```{r}
+Prediction <- predict(fullModel, newdata=inTest)
+```
+
+## TEST WITH CONFUSION MARIX
+```{r}
+confusionMatrix(Prediction, inTest$classe)
+```
+## ANALYZE MODEL
+```{r}
+fullModel$finalModel
+```
+
+```{r}
+varImp(fullModel)
+```
+## FINAL OUTPUT
+```{r}
+print(predict(fullModel, newdata=df_test))
+```
+
